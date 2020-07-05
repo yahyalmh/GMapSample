@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "272799989447",
+    "firebase_url": "https://gmapsample-da79b.firebaseio.com",
+    "project_id": "gmapsample-da79b",
+    "storage_bucket": "gmapsample-da79b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:272799989447:android:779a66b5fb7f2dafcf88e2",
+        "android_client_info": {
+          "package_name": "com.example.gmapsample"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "272799989447-45g12ooqvgo6r8sokotpaa1k20tib20b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCX1fwIcld0p7MDlCxYG33Qq-pq6cKpxGY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "272799989447-45g12ooqvgo6r8sokotpaa1k20tib20b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
