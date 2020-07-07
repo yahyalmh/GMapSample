@@ -10,7 +10,9 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.gmapsample.Constants.*
+import com.example.gmapsample.Constants.ERROR_DIALOG_REQUEST
+import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
+import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
 import com.example.gmapsample.R
 import com.example.gmapsample.Utils
 import com.google.android.gms.common.GoogleApiAvailability
