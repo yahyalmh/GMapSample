@@ -13,7 +13,7 @@ class Utils {
 
         private var mContext: Context = MainActivity.appContext
 
-        fun isMapsEnabled(): Boolean {
+        fun isGPSEnabled(): Boolean {
             val manager = mContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 return false
