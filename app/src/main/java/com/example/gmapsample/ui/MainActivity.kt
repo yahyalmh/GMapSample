@@ -15,12 +15,16 @@ import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
 import com.example.gmapsample.R
 import com.example.gmapsample.Utils
+import com.example.gmapsample.model.User
+import com.example.gmapsample.model.UserLocation
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.PendingResult
-import com.google.android.gms.common.api.ResultCallback
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.ktx.Firebase
 
 
 class MainActivity : AppCompatActivity() {
@@ -32,10 +36,15 @@ class MainActivity : AppCompatActivity() {
 
     private var mLocationPermissionGranted = false
     private var isMapEnabled = false
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var mDb: FirebaseFirestore
+    private var mUserLocation: UserLocation? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        appContext = applicationContext;
+        appContext = applicationContext
+        mDb = FirebaseFirestore.getInstance()
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContentView(R.layout.activity_main)
     }
 
@@ -44,13 +53,70 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun getUserDetails() {
+        if (mUserLocation == null) {
+            mUserLocation = UserLocation()
+
+            val userRef = mDb.collection(getString(R.string.collection_user))
+                .document("BmsiNHAT6RdelPDPJTsd")
+            userRef.get().addOnCompleteListener {
+                if (it.isSuccessful) {
+                    val user = it.result!!.toObject(User::class.java)
+                    if (user != null) {
+                        mUserLocation!!.user = user
+                    }
+                    getLastKnownLocation()
+                }
+            }
+        }
+    }
+
+    private fun saveUserLocations() {
+        if (mUserLocation != null) {
+            val locationRef = mDb
+                .collection(getString(R.string.collection_user_locations))
+                .document()
+
+            locationRef.set(mUserLocation!!).addOnCompleteListener {
+                if (it.isSuccessful) {
+                    Log.d(TAG, "user Location saved")
+                }
+            }
+        }
+    }
+
+    private fun getLastKnownLocation() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestLocationPermission()
+            return
+        }
+
+        fusedLocationClient.lastLocation.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val result = task.result!!
+                val geoPoint = GeoPoint(result.latitude, result.longitude)
+                Log.d(TAG, geoPoint.toString())
+                mUserLocation!!.geoPoint = geoPoint
+                mUserLocation!!.timestamp = null
+                saveUserLocations()
+            }
+        }
+    }
 
     override fun onResume() {
         super.onResume()
         if (checkGps()) {
             if (mLocationPermissionGranted) {
                 getChatRooms()
-            }else{
+                getUserDetails()
+            } else {
                 requestLocationPermission()
             }
         }
@@ -69,37 +135,35 @@ class MainActivity : AppCompatActivity() {
         builder.setAlwaysShow(true)
         val result: PendingResult<LocationSettingsResult> =
             LocationServices.SettingsApi.checkLocationSettings(googleApiClient, builder.build())
-        result.setResultCallback(object : ResultCallback<LocationSettingsResult?> {
-            override fun onResult(result: LocationSettingsResult) {
-                val status: Status = result.status
-                when (status.getStatusCode()) {
-                    LocationSettingsStatusCodes.SUCCESS -> Log.i(
+        result.setResultCallback {
+            val status: Status = it.status
+            when (status.statusCode) {
+                LocationSettingsStatusCodes.SUCCESS -> Log.i(
+                    TAG,
+                    "All location settings are satisfied."
+                )
+                LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
+                    Log.i(
                         TAG,
-                        "All location settings are satisfied."
+                        "Location settings are not satisfied. Show the user a dialog to upgrade location settings "
                     )
-                    LocationSettingsStatusCodes.RESOLUTION_REQUIRED -> {
-                        Log.i(
-                            TAG,
-                            "Location settings are not satisfied. Show the user a dialog to upgrade location settings "
+                    try {
+                        // Show the dialog by calling startResolutionForResult(), and check the result
+                        // in onActivityResult().
+                        status.startResolutionForResult(
+                            this@MainActivity,
+                            /*REQUEST_CHECK_SETTINGS*/1222
                         )
-                        try {
-                            // Show the dialog by calling startResolutionForResult(), and check the result
-                            // in onActivityResult().
-                            status.startResolutionForResult(
-                                this@MainActivity,
-                                /*REQUEST_CHECK_SETTINGS*/1222
-                            )
-                        } catch (e: SendIntentException) {
-                            Log.i(TAG, "PendingIntent unable to execute request.")
-                        }
+                    } catch (e: SendIntentException) {
+                        Log.i(TAG, "PendingIntent unable to execute request.")
                     }
-                    LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> Log.i(
-                        TAG,
-                        "Location settings are inadequate, and cannot be fixed here. Dialog not created."
-                    )
                 }
+                LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE -> Log.i(
+                    TAG,
+                    "Location settings are inadequate, and cannot be fixed here. Dialog not created."
+                )
             }
-        })
+        }
     }
 
     private fun checkGps(): Boolean {
@@ -130,6 +194,7 @@ class MainActivity : AppCompatActivity() {
         ) {
             mLocationPermissionGranted = true
             getChatRooms()
+            getUserDetails()
         } else {
             ActivityCompat.requestPermissions(
                 this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -162,6 +227,7 @@ class MainActivity : AppCompatActivity() {
             PERMISSIONS_REQUEST_ENABLE_GPS -> {
                 if (mLocationPermissionGranted) {
                     getChatRooms()
+                    getUserDetails()
                 } else {
                     requestLocationPermission()
                 }

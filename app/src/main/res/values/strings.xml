@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">GMapSample</string>
     <string name="google_map_api_key">AIzaSyC9rvglQ_mQqxxg7DA4BFE1ZTmE_Cbigyc</string>
+    <string name="collection_user_locations">User Locations</string>
+    <string name="collection_user">Users</string>
 </resources>
