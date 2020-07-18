@@ -50,4 +50,7 @@ dependencies {
     //firebase firestore
     //implementation 'com.google.firebase:firebase-firestore:21.4.3'
     implementation 'com.google.firebase:firebase-firestore-ktx:21.4.3'
+
+    implementation 'com.google.firebase:firebase-database-ktx:19.3.1'
+
 }

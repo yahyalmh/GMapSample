@@ -14,8 +14,8 @@ import com.example.gmapsample.Constants.ERROR_DIALOG_REQUEST
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
 import com.example.gmapsample.R
+import com.example.gmapsample.UserConfig
 import com.example.gmapsample.Utils
-import com.example.gmapsample.model.User
 import com.example.gmapsample.model.UserLocation
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
@@ -24,7 +24,6 @@ import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
-import com.google.firebase.ktx.Firebase
 
 
 class MainActivity : AppCompatActivity() {
@@ -56,18 +55,9 @@ class MainActivity : AppCompatActivity() {
     private fun getUserDetails() {
         if (mUserLocation == null) {
             mUserLocation = UserLocation()
+            mUserLocation!!.user = UserConfig.getInstance().currentUser
 
-            val userRef = mDb.collection(getString(R.string.collection_user))
-                .document("BmsiNHAT6RdelPDPJTsd")
-            userRef.get().addOnCompleteListener {
-                if (it.isSuccessful) {
-                    val user = it.result!!.toObject(User::class.java)
-                    if (user != null) {
-                        mUserLocation!!.user = user
-                    }
-                    getLastKnownLocation()
-                }
-            }
+            getLastKnownLocation()
         }
     }
 
@@ -77,11 +67,9 @@ class MainActivity : AppCompatActivity() {
                 .collection(getString(R.string.collection_user_locations))
                 .document()
 
-            locationRef.set(mUserLocation!!).addOnCompleteListener {
-                if (it.isSuccessful) {
-                    Log.d(TAG, "user Location saved")
-                }
-            }
+            locationRef.set(mUserLocation!!)
+        } else {
+            getLastKnownLocation()
         }
     }
 

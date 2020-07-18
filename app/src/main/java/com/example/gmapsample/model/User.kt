@@ -1,8 +1,10 @@
 package com.example.gmapsample.model
 
+import android.R.attr.author
 import android.os.Parcel
 import android.os.Parcelable
 import android.os.Parcelable.Creator
+import android.provider.ContactsContract
 
 
 class User : Parcelable {
@@ -10,25 +12,40 @@ class User : Parcelable {
     var user_id: String? = null
     var username: String? = null
     var avatar: String? = null
+    var password: String? = null
 
     constructor(
-        email: String?,
-        user_id: String?,
         username: String?,
-        avatar: String?
+        password: String?,
+        email: String?,
+        avatar: String?,
+        user_id: String?
     ) {
         this.email = email
         this.user_id = user_id
         this.username = username
         this.avatar = avatar
+        this.password = password
+    }
+
+    fun toMap(): Map<String, String?>? {
+        val result: HashMap<String, String?> = HashMap()
+        result["username"] = username
+        result["password"] = password
+        result["user_id"] = user_id
+        result["email"] = email
+        result["avatar"] = avatar
+        return result
     }
 
     constructor() {}
+
     protected constructor(`in`: Parcel) {
         email = `in`.readString()
         user_id = `in`.readString()
         username = `in`.readString()
         avatar = `in`.readString()
+        password = `in`.readString()
     }
 
     override fun toString(): String {
@@ -36,6 +53,7 @@ class User : Parcelable {
                 "email='" + email + '\'' +
                 ", user_id='" + user_id + '\'' +
                 ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
                 ", avatar='" + avatar + '\'' +
                 '}'
     }
@@ -48,6 +66,7 @@ class User : Parcelable {
         dest.writeString(email)
         dest.writeString(user_id)
         dest.writeString(username)
+        dest.writeString(password)
         dest.writeString(avatar)
     }
 
