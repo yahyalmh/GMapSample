@@ -3,7 +3,7 @@ package com.example.gmapsample
 import android.content.Context
 import android.location.LocationManager
 import android.widget.Toast
-import com.example.gmapsample.ui.MainActivity
+import com.example.gmapsample.ui.LaunchActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 
@@ -11,7 +11,7 @@ import com.google.android.gms.common.GoogleApiAvailability
 class Utils {
     companion object {
 
-        private var mContext: Context = MainActivity.appContext
+        private var mContext: Context = LaunchActivity.appContext
 
         fun isGPSEnabled(): Boolean {
             val manager = mContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager

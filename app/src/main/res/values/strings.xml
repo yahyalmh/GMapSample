@@ -7,4 +7,5 @@
     <string name="password">password</string>
     <string name="login">Login</string>
     <string name="login_image">login Image</string>
+    <string name="description">description</string>
 </resources>

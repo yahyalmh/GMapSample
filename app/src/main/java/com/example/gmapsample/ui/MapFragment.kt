@@ -11,15 +11,22 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.gmapsample.Constants.MAPVIEW_BUNDLE_KEY
 import com.example.gmapsample.R
+import com.example.gmapsample.UserConfig
+import com.example.gmapsample.model.UserLocation
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
 
-class UserListFragment: Fragment(), OnMapReadyCallback {
+class MapFragment : Fragment(), OnMapReadyCallback {
+    private var mUserLocation: UserLocation? = null
+    private lateinit var mMapBounds: LatLngBounds
+    private lateinit var mGoogleMap: GoogleMap
     lateinit var mapView: MapView
-    lateinit var listView:RecyclerView
+    lateinit var listView: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,9 +35,10 @@ class UserListFragment: Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_user_list, container, false)
         mapView = view.findViewById(R.id.user_list_map)
-        listView = view.findViewById(R.id.user_list_recycler_view)
+//        listView = view.findViewById(R.id.user_list_recycler_view)
 
         initGoogleMap(savedInstanceState)
+        mUserLocation = UserConfig.getInstance().currentUserLocation!!
         return view
     }
 
@@ -40,25 +48,47 @@ class UserListFragment: Fragment(), OnMapReadyCallback {
             mapViewBundle = savedInstanceState.getBundle(MAPVIEW_BUNDLE_KEY)
         }
         mapView.onCreate(mapViewBundle)
-        mapView.getMapAsync(this@UserListFragment)
+        mapView.getMapAsync(this@MapFragment)
     }
 
     override fun onMapReady(map: GoogleMap) {
-        map.addMarker(MarkerOptions().position(LatLng(0.0,0.0)).title("Marker"))
-        if (ActivityCompat.checkSelfPermission(activity!!.applicationContext, Manifest.permission.ACCESS_FINE_LOCATION)
-        != PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(activity!!.applicationContext, Manifest.permission.ACCESS_COARSE_LOCATION)
-        != PackageManager.PERMISSION_GRANTED){
+        if (ActivityCompat.checkSelfPermission(
+                activity!!.applicationContext,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+            != PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(
+                activity!!.applicationContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            != PackageManager.PERMISSION_GRANTED
+        ) {
             return
         }
-        map.setMyLocationEnabled(true)
+        map.isMyLocationEnabled = true
+        mGoogleMap = map
+        map.setOnMapLoadedCallback { setCameraView()}
+    }
+
+    private fun setCameraView() {
+        val radius = 0.01f
+        if (mUserLocation != null) {
+            val bottom = mUserLocation!!.geoPoint.latitude - radius
+            val left = mUserLocation!!.geoPoint.longitude - radius
+            val top = mUserLocation!!.geoPoint.latitude + radius
+            val right = mUserLocation!!.geoPoint.longitude + radius
+            mMapBounds = LatLngBounds(LatLng(bottom, left), LatLng(top, right))
+            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mMapBounds, 10))
+            mGoogleMap.addMarker(MarkerOptions().position(LatLng(mUserLocation!!.geoPoint.latitude, mUserLocation!!.geoPoint.longitude)).title("You"))
+
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
 
         var mapViewBundle = outState.getBundle(MAPVIEW_BUNDLE_KEY)
-        if (mapViewBundle == null){
+        if (mapViewBundle == null) {
             mapViewBundle = Bundle()
             outState.putBundle(MAPVIEW_BUNDLE_KEY, mapViewBundle)
         }

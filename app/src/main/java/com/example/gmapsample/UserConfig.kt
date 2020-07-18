@@ -1,9 +1,11 @@
 package com.example.gmapsample
 
 import com.example.gmapsample.model.User
+import com.example.gmapsample.model.UserLocation
 
 class UserConfig private constructor() {
     public lateinit var currentUser: User
+    var currentUserLocation : UserLocation? = null
 
     companion object {
 

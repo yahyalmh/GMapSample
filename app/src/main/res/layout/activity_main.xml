@@ -4,11 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.MainActivity">
+    tools:context=".ui.LaunchActivity">
 
-    <fragment android:name="com.example.gmapsample.ui.UserListFragment"
+   <!-- <fragment class ="com.example.gmapsample.ui.UserListFragment"
         android:id="@+id/headlines_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/fragment_user_list" />
+       />-->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/fragment_container"
+        />
 </LinearLayout>

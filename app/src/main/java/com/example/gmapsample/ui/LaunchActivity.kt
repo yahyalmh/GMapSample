@@ -7,9 +7,12 @@ import android.content.IntentSender.SendIntentException
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentTransaction
 import com.example.gmapsample.Constants.ERROR_DIALOG_REQUEST
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
@@ -26,7 +29,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 
 
-class MainActivity : AppCompatActivity() {
+class LaunchActivity : FragmentActivity() {
     private val TAG = "MainActivity"
 
     companion object {
@@ -68,9 +71,19 @@ class MainActivity : AppCompatActivity() {
                 .document()
 
             locationRef.set(mUserLocation!!)
+            UserConfig.getInstance().currentUserLocation = mUserLocation!!
+            startMapFragment()
         } else {
             getLastKnownLocation()
         }
+    }
+
+    private fun startMapFragment() {
+        val fr: Fragment = MapFragment()
+        val fm: FragmentManager = supportFragmentManager
+        val fragmentTransaction: FragmentTransaction? = fm.beginTransaction()
+        fragmentTransaction!!.replace(R.id.fragment_container, fr)
+        fragmentTransaction.commit()
     }
 
     private fun getLastKnownLocation() {
@@ -111,7 +124,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestGps() {
-        val googleApiClient = GoogleApiClient.Builder(this@MainActivity)
+        val googleApiClient = GoogleApiClient.Builder(this@LaunchActivity)
             .addApi(LocationServices.API).build()
         googleApiClient.connect()
         val locationRequest = LocationRequest.create()
@@ -139,7 +152,7 @@ class MainActivity : AppCompatActivity() {
                         // Show the dialog by calling startResolutionForResult(), and check the result
                         // in onActivityResult().
                         status.startResolutionForResult(
-                            this@MainActivity,
+                            this@LaunchActivity,
                             /*REQUEST_CHECK_SETTINGS*/1222
                         )
                     } catch (e: SendIntentException) {
@@ -163,7 +176,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             val dialog = GoogleApiAvailability.getInstance().getErrorDialog(
-                this@MainActivity,
+                this@LaunchActivity,
                 GoogleApiAvailability.getInstance()
                     .isGooglePlayServicesAvailable(applicationContext),
                 ERROR_DIALOG_REQUEST

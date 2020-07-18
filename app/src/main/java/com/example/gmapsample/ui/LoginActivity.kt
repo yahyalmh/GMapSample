@@ -3,7 +3,6 @@ package com.example.gmapsample.ui
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -60,7 +59,7 @@ class LoginActivity : AppCompatActivity() {
                 }
                 if (user != null) {
                     UserConfig.getInstance().currentUser = user as User
-                    startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                    startActivity(Intent(this@LoginActivity, LaunchActivity::class.java))
                 } else {
                     Toast.makeText(
                         this@LoginActivity,
