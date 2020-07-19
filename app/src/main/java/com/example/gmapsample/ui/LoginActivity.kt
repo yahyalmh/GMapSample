@@ -1,8 +1,11 @@
 package com.example.gmapsample.ui
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -20,30 +23,60 @@ import com.google.firebase.ktx.Firebase
 
 
 class LoginActivity : AppCompatActivity() {
+
+    private lateinit var usersTableName: String
     private lateinit var mCloudFirebase: FirebaseFirestore
-    lateinit var loginBtn: Button
-    lateinit var userNameTxtView: EditText
-    lateinit var passwordTxtView: EditText
     private lateinit var mRealTimeDatabase: DatabaseReference
-    private val usersTableName = "Users"
+
+    private lateinit var loginBtn: Button
+    private lateinit var registerBtn: Button
+    private lateinit var userNameTxtView: EditText
+    private lateinit var passwordTxtView: EditText
+    private lateinit var confirmTextView: EditText
+    var registerViewed = false
+
+
     private val TAG = "TAG"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+        usersTableName = getString(R.string.collection_user)
         mRealTimeDatabase = Firebase.database.reference
         mCloudFirebase = FirebaseFirestore.getInstance()
 
+        loginBtn = findViewById(R.id.loginButton)
+        registerBtn = findViewById(R.id.registerButton)
         userNameTxtView = findViewById(R.id.username)
         passwordTxtView = findViewById(R.id.password)
-        loginBtn = findViewById(R.id.loginButton)
+        confirmTextView = findViewById(R.id.confirm_password)
 
         loginBtn.setOnClickListener {
             val username = userNameTxtView.text.toString()
             val password = passwordTxtView.text.toString()
-
-            //  insertUsers()
-            verifyLogin(username, password)
+            if (username.isEmpty() || password.isEmpty()) {
+                showToast("Some field are empty")
+            } else {
+                verifyLogin(username, password)
+            }
+        }
+        registerBtn.setOnClickListener {
+            if (!registerViewed) {
+                showRegister()
+            } else {
+                val username = userNameTxtView.text
+                val password = passwordTxtView.text
+                val confPass = confirmTextView.text
+                if (username.isEmpty() || password.isEmpty() || confPass.isEmpty()) {
+                    showToast("Some field are empty")
+                } else if (password.toString() != confPass.toString()) {
+                    showToast("passwords are not equal")
+                    passwordTxtView.setText("")
+                    confirmTextView.setText("")
+                } else {
+                    insertUsers(username.toString(), password.toString())
+                }
+            }
         }
 
     }
@@ -60,32 +93,70 @@ class LoginActivity : AppCompatActivity() {
                 if (user != null) {
                     UserConfig.getInstance().currentUser = user as User
                     startActivity(Intent(this@LoginActivity, LaunchActivity::class.java))
+                    finish()
                 } else {
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "username or password was invalid",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    userNameTxtView.setText("")
+                    showToast("username or password was invalid")
                     passwordTxtView.setText("")
                 }
             }
     }
 
-    private fun insertUsers() {
-        val userOne = User("yaya", "1234", "yaya@gmail.com", "12324555", "122")
-        val userTwo = User("ali", "4567", "ali@gmail.com", "12324555", "123")
+    private fun insertUsers(username: String, password: String) {
+        val user = User(username, password, "temp@gmil.com", "4545466", "142")
 
-        var usersRef = FirebaseFirestore.getInstance()
+        val usersRef = FirebaseFirestore.getInstance()
             .collection(usersTableName)
             .document()
 
-        usersRef.set(userTwo)
+        usersRef.set(user).addOnCompleteListener {
+            if (it.isSuccessful || it.isComplete) {
+                hideRegister()
+                showToast("Register was successful")
 
-        usersRef = FirebaseFirestore.getInstance()
-            .collection(usersTableName)
-            .document()
-        usersRef.set(userOne)
+            } else {
+                showToast("Register was not successful, Try again")
+            }
+        }
+
+    }
+
+    private fun hideRegister() {
+        registerViewed = false
+        confirmTextView.visibility = View.GONE
+        loginBtn.visibility = View.VISIBLE
+        registerBtn.gravity = Gravity.END
+        registerBtn.backgroundTintList =
+            ColorStateList.valueOf(resources.getColor(R.color.Grey))
+        userNameTxtView.setText("")
+        passwordTxtView.setText("")
+        confirmTextView.setText("")
+    }
+
+    private fun showRegister() {
+        registerViewed = true
+        userNameTxtView.setText("")
+        passwordTxtView.setText("")
+        confirmTextView.setText("")
+        confirmTextView.visibility = View.VISIBLE
+        loginBtn.visibility = View.GONE
+        registerBtn.gravity = Gravity.CENTER
+        registerBtn.backgroundTintList =
+            ColorStateList.valueOf(resources.getColor(R.color.blue1))
+    }
+
+    private fun showToast(message: String) {
+        if (message.isEmpty()) {
+            return
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onBackPressed() {
+        if (registerViewed) {
+            hideRegister()
+        }else{
+            super.onBackPressed()
+        }
     }
 
     private fun howToUserRealTimeDatabase(username: String, password: String) {

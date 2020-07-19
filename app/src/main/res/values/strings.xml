@@ -3,9 +3,11 @@
     <string name="google_map_api_key">AIzaSyC9rvglQ_mQqxxg7DA4BFE1ZTmE_Cbigyc</string>
     <string name="collection_user_locations">User Locations</string>
     <string name="collection_user">Users</string>
-    <string name="username">username</string>
-    <string name="password">password</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
     <string name="login">Login</string>
     <string name="login_image">login Image</string>
     <string name="description">description</string>
+    <string name="register">Register</string>
+    <string name="conf_pass">Confirm Password</string>
 </resources>

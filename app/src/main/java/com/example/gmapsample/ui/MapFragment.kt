@@ -33,8 +33,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_user_list, container, false)
-        mapView = view.findViewById(R.id.user_list_map)
+        val view = inflater.inflate(R.layout.fragment_map, container, false)
+        mapView = view.findViewById(R.id.users_map)
 //        listView = view.findViewById(R.id.user_list_recycler_view)
 
         initGoogleMap(savedInstanceState)
