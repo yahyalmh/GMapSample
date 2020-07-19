@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.gmapsample.R
@@ -33,6 +34,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var userNameTxtView: EditText
     private lateinit var passwordTxtView: EditText
     private lateinit var confirmTextView: EditText
+    private lateinit var progressBar: ProgressBar
     var registerViewed = false
 
 
@@ -50,6 +52,7 @@ class LoginActivity : AppCompatActivity() {
         userNameTxtView = findViewById(R.id.username)
         passwordTxtView = findViewById(R.id.password)
         confirmTextView = findViewById(R.id.confirm_password)
+        progressBar = findViewById(R.id.progressBar)
 
         loginBtn.setOnClickListener {
             val username = userNameTxtView.text.toString()
@@ -82,7 +85,9 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun verifyLogin(username: String, password: String) {
+        showProgressBar(true)
         var user: User? = null
+
         mCloudFirebase.collection(usersTableName).whereEqualTo("username", username)
             .whereEqualTo("password", password)
             .get()
@@ -91,6 +96,7 @@ class LoginActivity : AppCompatActivity() {
                     user = child.toObject(User::class.java)
                 }
                 if (user != null) {
+                    showProgressBar(false)
                     UserConfig.getInstance().currentUser = user as User
                     startActivity(Intent(this@LoginActivity, LaunchActivity::class.java))
                     finish()
@@ -102,6 +108,7 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun insertUsers(username: String, password: String) {
+        showProgressBar(true)
         val user = User(username, password, "temp@gmil.com", "4545466", "142")
 
         val usersRef = FirebaseFirestore.getInstance()
@@ -109,10 +116,10 @@ class LoginActivity : AppCompatActivity() {
             .document()
 
         usersRef.set(user).addOnCompleteListener {
+            showProgressBar(false)
             if (it.isSuccessful || it.isComplete) {
-                hideRegister()
                 showToast("Register was successful")
-
+                hideRegister()
             } else {
                 showToast("Register was not successful, Try again")
             }
@@ -120,11 +127,18 @@ class LoginActivity : AppCompatActivity() {
 
     }
 
+    private fun showProgressBar(shown: Boolean) {
+        if (shown) {
+            progressBar.visibility = View.VISIBLE
+        }else{
+            progressBar.visibility = View.GONE
+        }
+    }
+
     private fun hideRegister() {
         registerViewed = false
         confirmTextView.visibility = View.GONE
         loginBtn.visibility = View.VISIBLE
-        registerBtn.gravity = Gravity.END
         registerBtn.backgroundTintList =
             ColorStateList.valueOf(resources.getColor(R.color.Grey))
         userNameTxtView.setText("")

@@ -3,12 +3,12 @@ package com.example.gmapsample.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
 import com.example.gmapsample.Constants.MAPVIEW_BUNDLE_KEY
 import com.example.gmapsample.R
 import com.example.gmapsample.UserConfig
@@ -20,13 +20,15 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MapFragment : Fragment(), OnMapReadyCallback {
+    private lateinit var cloudFirebaseDb: FirebaseFirestore
     private var mUserLocation: UserLocation? = null
     private lateinit var mMapBounds: LatLngBounds
     private lateinit var mGoogleMap: GoogleMap
     lateinit var mapView: MapView
-    lateinit var listView: RecyclerView
+    private val usersLocationList: ArrayList<UserLocation> = ArrayList()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,12 +37,24 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_map, container, false)
         mapView = view.findViewById(R.id.users_map)
-//        listView = view.findViewById(R.id.user_list_recycler_view)
-
+        cloudFirebaseDb = FirebaseFirestore.getInstance()
+        getUsersLocations()
         initGoogleMap(savedInstanceState)
         mUserLocation = UserConfig.getInstance().currentUserLocation!!
         return view
     }
+
+    private fun getUsersLocations() {
+        cloudFirebaseDb.collection(getString(R.string.collection_user_locations))
+            .get()
+            .addOnSuccessListener { documents ->
+                for (child in documents.documents){
+                    val userLocation :UserLocation = child.toObject(UserLocation::class.java)!!
+                    usersLocationList.add(userLocation)
+                }
+            }
+    }
+
 
     private fun initGoogleMap(savedInstanceState: Bundle?) {
         var mapViewBundle: Bundle? = null
@@ -67,11 +81,14 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         }
         map.isMyLocationEnabled = true
         mGoogleMap = map
-        map.setOnMapLoadedCallback { setCameraView()}
+        map.setOnMapLoadedCallback {
+            setCameraView()
+            addUserMarkers()
+        }
     }
 
     private fun setCameraView() {
-        val radius = 0.01f
+        val radius = 0.03f
         if (mUserLocation != null) {
             val bottom = mUserLocation!!.geoPoint.latitude - radius
             val left = mUserLocation!!.geoPoint.longitude - radius
@@ -79,8 +96,19 @@ class MapFragment : Fragment(), OnMapReadyCallback {
             val right = mUserLocation!!.geoPoint.longitude + radius
             mMapBounds = LatLngBounds(LatLng(bottom, left), LatLng(top, right))
             mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mMapBounds, 10))
-            mGoogleMap.addMarker(MarkerOptions().position(LatLng(mUserLocation!!.geoPoint.latitude, mUserLocation!!.geoPoint.longitude)).title("You"))
+        }
+    }
 
+    private fun addUserMarkers() {
+        for (userLocation in usersLocationList) {
+            mGoogleMap.addMarker(
+                MarkerOptions().position(
+                    LatLng(
+                        userLocation.geoPoint.latitude,
+                        userLocation.geoPoint.longitude
+                    )
+                ).title(userLocation.user.email)
+            )
         }
     }
 

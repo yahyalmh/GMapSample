@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -37,15 +38,14 @@ class LaunchActivity : FragmentActivity() {
     }
 
     private var mLocationPermissionGranted = false
-    private var isMapEnabled = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var mDb: FirebaseFirestore
+    private lateinit var cloudFirebaseDb: FirebaseFirestore
     private var mUserLocation: UserLocation? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appContext = applicationContext
-        mDb = FirebaseFirestore.getInstance()
+        cloudFirebaseDb = FirebaseFirestore.getInstance()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContentView(R.layout.activity_main)
     }
@@ -66,7 +66,7 @@ class LaunchActivity : FragmentActivity() {
 
     private fun saveUserLocations() {
         if (mUserLocation != null) {
-            val locationRef = mDb
+            val locationRef = cloudFirebaseDb
                 .collection(getString(R.string.collection_user_locations))
                 .document()
 
@@ -101,8 +101,8 @@ class LaunchActivity : FragmentActivity() {
 
         fusedLocationClient.lastLocation.addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                val result = task.result!!
-                val geoPoint = GeoPoint(result.latitude, result.longitude)
+                val location :Location = task.result!!
+                val geoPoint = GeoPoint(location.latitude, location.longitude)
                 Log.d(TAG, geoPoint.toString())
                 mUserLocation!!.geoPoint = geoPoint
                 mUserLocation!!.timestamp = null
