@@ -2,16 +2,19 @@ package com.example.gmapsample.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.gmapsample.Constants.MAPVIEW_BUNDLE_KEY
 import com.example.gmapsample.R
 import com.example.gmapsample.UserConfig
+import com.example.gmapsample.Utils
 import com.example.gmapsample.model.UserLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -28,6 +31,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     private lateinit var mMapBounds: LatLngBounds
     private lateinit var mGoogleMap: GoogleMap
     lateinit var mapView: MapView
+    private lateinit var userImage:ImageView
     private val usersLocationList: ArrayList<UserLocation> = ArrayList()
 
     override fun onCreateView(
@@ -37,6 +41,9 @@ class MapFragment : Fragment(), OnMapReadyCallback {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_map, container, false)
         mapView = view.findViewById(R.id.users_map)
+        userImage = view.findViewById(R.id.user_image)
+        userImage.setBackgroundDrawable(Utils.getDrawableWithRadius())
+        userImage.setImageDrawable(activity!!.getDrawable(UserConfig.getInstance().currentUser.avatar!!.toInt()))
         cloudFirebaseDb = FirebaseFirestore.getInstance()
         getUsersLocations()
         initGoogleMap(savedInstanceState)
@@ -107,7 +114,7 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         userLocation.geoPoint.latitude,
                         userLocation.geoPoint.longitude
                     )
-                ).title(userLocation.user.email)
+                ).title(userLocation.user.username)
             )
         }
     }

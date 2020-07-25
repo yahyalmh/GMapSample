@@ -1,15 +1,14 @@
 package com.example.gmapsample.ui
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.gmapsample.R
 import com.example.gmapsample.UserConfig
@@ -35,17 +34,27 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var passwordTxtView: EditText
     private lateinit var confirmTextView: EditText
     private lateinit var progressBar: ProgressBar
+    private lateinit var userImage: ImageView
+    private lateinit var loginExplain: TextView
+    private val requestCode = 2232
+    private var profilePictureId = R.mipmap.ic_login
+
     var registerViewed = false
 
+    companion object {
+        lateinit var appContext: Context
+    }
 
     private val TAG = "TAG"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appContext = applicationContext
         setContentView(R.layout.activity_login)
         usersTableName = getString(R.string.collection_user)
         mRealTimeDatabase = Firebase.database.reference
         mCloudFirebase = FirebaseFirestore.getInstance()
+
 
         loginBtn = findViewById(R.id.loginButton)
         registerBtn = findViewById(R.id.registerButton)
@@ -53,6 +62,12 @@ class LoginActivity : AppCompatActivity() {
         passwordTxtView = findViewById(R.id.password)
         confirmTextView = findViewById(R.id.confirm_password)
         progressBar = findViewById(R.id.progressBar)
+        userImage = findViewById(R.id.user_image)
+        loginExplain = findViewById(R.id.login_explain)
+
+        userImage.setOnClickListener {
+            startActivityForResult(Intent(this, SelectPictureFragment::class.java), requestCode)
+        }
 
         loginBtn.setOnClickListener {
             val username = userNameTxtView.text.toString()
@@ -95,8 +110,8 @@ class LoginActivity : AppCompatActivity() {
                 for (child in documents) {
                     user = child.toObject(User::class.java)
                 }
+                showProgressBar(false)
                 if (user != null) {
-                    showProgressBar(false)
                     UserConfig.getInstance().currentUser = user as User
                     startActivity(Intent(this@LoginActivity, LaunchActivity::class.java))
                     finish()
@@ -109,7 +124,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun insertUsers(username: String, password: String) {
         showProgressBar(true)
-        val user = User(username, password, "temp@gmil.com", "4545466", "142")
+        val user = User(username, password, "temp@gmil.com", profilePictureId.toString(), "142")
 
         val usersRef = FirebaseFirestore.getInstance()
             .collection(usersTableName)
@@ -130,7 +145,7 @@ class LoginActivity : AppCompatActivity() {
     private fun showProgressBar(shown: Boolean) {
         if (shown) {
             progressBar.visibility = View.VISIBLE
-        }else{
+        } else {
             progressBar.visibility = View.GONE
         }
     }
@@ -144,6 +159,8 @@ class LoginActivity : AppCompatActivity() {
         userNameTxtView.setText("")
         passwordTxtView.setText("")
         confirmTextView.setText("")
+        loginExplain.visibility = View.VISIBLE
+        userImage.visibility = View.GONE
     }
 
     private fun showRegister() {
@@ -154,6 +171,8 @@ class LoginActivity : AppCompatActivity() {
         confirmTextView.visibility = View.VISIBLE
         loginBtn.visibility = View.GONE
         registerBtn.gravity = Gravity.CENTER
+        userImage.visibility = View.VISIBLE
+        loginExplain.visibility = View.GONE
         registerBtn.backgroundTintList =
             ColorStateList.valueOf(resources.getColor(R.color.blue1))
     }
@@ -165,10 +184,21 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == requestCode) {
+            if (resultCode == Activity.RESULT_OK) {
+                profilePictureId = data!!.getIntExtra("picture_id", R.mipmap.ic_login)
+                userImage.setImageDrawable(getDrawable(profilePictureId))
+            }
+
+        }
+    }
+
     override fun onBackPressed() {
         if (registerViewed) {
             hideRegister()
-        }else{
+        } else {
             super.onBackPressed()
         }
     }

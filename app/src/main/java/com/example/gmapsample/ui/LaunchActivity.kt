@@ -33,10 +33,6 @@ import com.google.firebase.firestore.GeoPoint
 class LaunchActivity : FragmentActivity() {
     private val TAG = "MainActivity"
 
-    companion object {
-        lateinit var appContext: Context
-    }
-
     private var mLocationPermissionGranted = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var cloudFirebaseDb: FirebaseFirestore
@@ -44,7 +40,6 @@ class LaunchActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        appContext = applicationContext
         cloudFirebaseDb = FirebaseFirestore.getInstance()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContentView(R.layout.activity_main)

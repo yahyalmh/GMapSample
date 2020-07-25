@@ -1,18 +1,26 @@
 package com.example.gmapsample
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.location.LocationManager
 import android.widget.Toast
 import com.example.gmapsample.ui.LaunchActivity
+import com.example.gmapsample.ui.LoginActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 
 class Utils {
     companion object {
 
-        private var mContext: Context = LaunchActivity.appContext
+        private var mContext: Context = LoginActivity.appContext
 
+        val density = mContext.resources.displayMetrics.density;
         fun isGPSEnabled(): Boolean {
             val manager = mContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
             if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -42,6 +50,48 @@ class Utils {
             }
             return false
         }
-    }
+        public fun dp(value: Float): Int {
+            return if (value == 0f) {
+                0
+            } else ceil(density * value).toInt()
+        }
 
+        public fun dpr(value: Float): Int {
+            return if (value == 0f) {
+                0
+            } else (density * value).roundToInt().toInt()
+        }
+
+        public fun dp2(value: Float): Int {
+            return if (value == 0f) {
+                0
+            } else floor(density * value).toInt()
+        }
+
+        public fun getDrawableWithRadius(): Drawable? {
+            val gradientDrawable = GradientDrawable()
+            gradientDrawable.orientation =  GradientDrawable.Orientation.BR_TL
+            gradientDrawable.shape = GradientDrawable.RECTANGLE
+            gradientDrawable.colors = intArrayOf(
+                Color.RED,
+                Color.GREEN,
+                Color.YELLOW,
+                Color.CYAN
+            )
+            gradientDrawable.gradientType = GradientDrawable.LINEAR_GRADIENT
+            val radius = 25f
+            gradientDrawable.cornerRadii = floatArrayOf(
+                radius,
+                radius,
+                radius,
+                radius,
+                radius,
+                radius,
+                radius,
+                radius
+            )
+            return gradientDrawable
+        }
+
+    }
 }

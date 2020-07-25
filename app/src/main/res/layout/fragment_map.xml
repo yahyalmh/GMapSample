@@ -8,32 +8,14 @@
         android:id="@+id/users_map"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <ImageButton
-        android:id="@+id/btn_full_screen_map"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginRight="10dp"
-        android:background="@color/White"
-        android:contentDescription="@string/description"
-        android:foregroundGravity="left|bottom"
-        android:src="@drawable/ic_full_screen_black_24dp" />
-
-
-    <ImageButton
-        android:id="@+id/btn_reset_map"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:layout_gravity="bottom|start"
-        android:layout_marginStart="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:background="@color/White"
-        android:contentDescription="@string/description"
-        android:src="@drawable/ic_refresh_black_24dp" />
+    <ImageView
+        android:id="@+id/user_image"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:foregroundGravity="left|top"
+        android:layout_margin="15dp"
+        android:padding="5dp"
+        android:contentDescription="@string/description" />
 
     <ProgressBar
         android:id="@+id/progressBar"

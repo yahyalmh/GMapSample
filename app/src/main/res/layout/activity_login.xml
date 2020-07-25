@@ -19,6 +19,7 @@
         />
 
     <LinearLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -30,7 +31,18 @@
             android:layout_gravity="center"
             android:layout_margin="30dp"
             android:contentDescription="@string/login_image"
-            android:src="@mipmap/ic_login" />
+            android:src="@mipmap/ic_login"
+            android:visibility="gone"/>
+        <TextView
+            android:id="@+id/login_explain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:layout_margin="10dp"
+            android:padding="5dp"
+            android:text="@string/login_explain"/>
 
         <EditText
             android:id="@+id/username"
