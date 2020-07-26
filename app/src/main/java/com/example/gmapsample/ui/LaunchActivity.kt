@@ -95,7 +95,7 @@ class LaunchActivity : FragmentActivity() {
         }
 
         fusedLocationClient.lastLocation.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
+            if (task.isSuccessful && task.result!= null) {
                 val location :Location = task.result!!
                 val geoPoint = GeoPoint(location.latitude, location.longitude)
                 Log.d(TAG, geoPoint.toString())

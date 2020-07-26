@@ -50,6 +50,7 @@ class Utils {
             }
             return false
         }
+
         public fun dp(value: Float): Int {
             return if (value == 0f) {
                 0
@@ -67,31 +68,5 @@ class Utils {
                 0
             } else floor(density * value).toInt()
         }
-
-        public fun getDrawableWithRadius(): Drawable? {
-            val gradientDrawable = GradientDrawable()
-            gradientDrawable.orientation =  GradientDrawable.Orientation.BR_TL
-            gradientDrawable.shape = GradientDrawable.RECTANGLE
-            gradientDrawable.colors = intArrayOf(
-                Color.RED,
-                Color.GREEN,
-                Color.YELLOW,
-                Color.CYAN
-            )
-            gradientDrawable.gradientType = GradientDrawable.LINEAR_GRADIENT
-            val radius = 25f
-            gradientDrawable.cornerRadii = floatArrayOf(
-                radius,
-                radius,
-                radius,
-                radius,
-                radius,
-                radius,
-                radius,
-                radius
-            )
-            return gradientDrawable
-        }
-
     }
 }

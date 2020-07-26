@@ -18,7 +18,12 @@ class SelectCell : LinearLayout {
 
     constructor(context: Context) : super(context) {
         orientation = VERTICAL
-        setBackgroundDrawable(Utils.getDrawableWithRadius())
+        setBackgroundDrawable(RoundedDrawable(intArrayOf(
+            Color.RED,
+            Color.GREEN,
+            Color.YELLOW,
+            Color.CYAN
+        ), 25f))
 
         imageView = ImageView(context)
         val layoutParams = LayoutParams(Utils.dp(100f), Utils.dp(100f))

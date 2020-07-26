@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.gmapsample.R
 import com.example.gmapsample.UserConfig
 import com.example.gmapsample.model.User
+import com.example.gmapsample.ui.component.RoundedDrawable
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -62,6 +63,7 @@ class LoginActivity : AppCompatActivity() {
         passwordTxtView = findViewById(R.id.password)
         confirmTextView = findViewById(R.id.confirm_password)
         progressBar = findViewById(R.id.progressBar)
+        progressBar.setBackgroundDrawable(RoundedDrawable(30f))
         userImage = findViewById(R.id.user_image)
         loginExplain = findViewById(R.id.login_explain)
 
@@ -172,6 +174,7 @@ class LoginActivity : AppCompatActivity() {
         loginBtn.visibility = View.GONE
         registerBtn.gravity = Gravity.CENTER
         userImage.visibility = View.VISIBLE
+        userImage.setImageDrawable(getDrawable(R.mipmap.ic_login))
         loginExplain.visibility = View.GONE
         registerBtn.backgroundTintList =
             ColorStateList.valueOf(resources.getColor(R.color.blue1))
