@@ -1,11 +1,13 @@
 package com.example.gmapsample.ui
 
 import android.Manifest
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -20,13 +22,14 @@ import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
 import com.example.gmapsample.R
 import com.example.gmapsample.UserConfig
 import com.example.gmapsample.Utils
+import com.example.gmapsample.db.FirebaseDatabase
 import com.example.gmapsample.model.UserLocation
+import com.example.gmapsample.service.LocationService
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.PendingResult
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 
 
@@ -35,12 +38,10 @@ class LaunchActivity : FragmentActivity() {
 
     private var mLocationPermissionGranted = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var cloudFirebaseDb: FirebaseFirestore
     private var mUserLocation: UserLocation? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        cloudFirebaseDb = FirebaseFirestore.getInstance()
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContentView(R.layout.activity_main)
     }
@@ -59,28 +60,6 @@ class LaunchActivity : FragmentActivity() {
         }
     }
 
-    private fun saveUserLocations() {
-        if (mUserLocation != null) {
-            val locationRef = cloudFirebaseDb
-                .collection(getString(R.string.collection_user_locations))
-                .document()
-
-            locationRef.set(mUserLocation!!)
-            UserConfig.getInstance().currentUserLocation = mUserLocation!!
-            startMapFragment()
-        } else {
-            getLastKnownLocation()
-        }
-    }
-
-    private fun startMapFragment() {
-        val fr: Fragment = MapFragment()
-        val fm: FragmentManager = supportFragmentManager
-        val fragmentTransaction: FragmentTransaction? = fm.beginTransaction()
-        fragmentTransaction!!.replace(R.id.fragment_container, fr)
-        fragmentTransaction.commit()
-    }
-
     private fun getLastKnownLocation() {
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -95,15 +74,56 @@ class LaunchActivity : FragmentActivity() {
         }
 
         fusedLocationClient.lastLocation.addOnCompleteListener { task ->
-            if (task.isSuccessful && task.result!= null) {
-                val location :Location = task.result!!
+            if (task.isSuccessful && task.result != null) {
+                val location: Location = task.result!!
                 val geoPoint = GeoPoint(location.latitude, location.longitude)
-                Log.d(TAG, geoPoint.toString())
+
                 mUserLocation!!.geoPoint = geoPoint
                 mUserLocation!!.timestamp = null
-                saveUserLocations()
+                FirebaseDatabase.getInstance().saveUserLocations(mUserLocation!!)
+                    .addOnCompleteListener {
+                        if (it.isComplete || it.isSuccessful) {
+                            startMapFragment()
+                            startLocationService()
+                            UserConfig.getInstance().currentUserLocation = mUserLocation
+                        } else {
+                            getLastKnownLocation()
+                        }
+                    }
+
+            } else {
+                getLastKnownLocation()
             }
         }
+    }
+
+    private fun startLocationService() {
+        if (!isLocationServiceRunning()) {
+            val intent = Intent(this@LaunchActivity, LocationService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                this@LaunchActivity.startForegroundService(intent)
+            } else {
+                this@LaunchActivity.startService(intent)
+            }
+        }
+    }
+
+    private fun isLocationServiceRunning(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (serviceInfo in activityManager.getRunningServices(Int.MAX_VALUE)) {
+            if (serviceInfo.service.className == "com.example.gmapsample.service.LocationService") {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun startMapFragment() {
+        val fr: Fragment = MapFragment()
+        val fm: FragmentManager = supportFragmentManager
+        val fragmentTransaction: FragmentTransaction? = fm.beginTransaction()
+        fragmentTransaction!!.replace(R.id.fragment_container, fr)
+        fragmentTransaction.commit()
     }
 
     override fun onResume() {

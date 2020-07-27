@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <application
         android:allowBackup="false"
@@ -34,6 +35,8 @@
             android:name="org.apache.http.legacy"
             android:required="false" />
 
+        <service android:name=".service.LocationService"
+            android:stopWithTask="true"/>
     </application>
 
 </manifest>

@@ -4,7 +4,7 @@ import com.example.gmapsample.model.User
 import com.example.gmapsample.model.UserLocation
 
 class UserConfig private constructor() {
-    public lateinit var currentUser: User
+    lateinit var currentUser: User
     var currentUserLocation : UserLocation? = null
 
     companion object {
@@ -12,7 +12,7 @@ class UserConfig private constructor() {
         @Volatile
         private var instance: UserConfig? = null;
 
-        public fun getInstance(): UserConfig {
+        fun getInstance(): UserConfig {
             var localInstance = instance
 
             if (localInstance == null) {
