@@ -34,5 +34,22 @@ class IClusterItem : ClusterItem {
     override fun getPosition(): LatLng {
         return position
     }
+    fun setPosition(position: LatLng){
+        this.position = position
+    }
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IClusterItem
+
+        if (user != other.user) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return user.hashCode()
+    }
 
 }

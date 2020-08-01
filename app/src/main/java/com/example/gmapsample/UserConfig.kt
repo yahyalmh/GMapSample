@@ -28,4 +28,7 @@ class UserConfig private constructor() {
             return localInstance!!
         }
     }
+    public fun clear() {
+        instance = null
+    }
 }

@@ -8,6 +8,7 @@ import com.example.gmapsample.model.UserLocation
 import com.example.gmapsample.ui.LoginActivity
 import com.google.android.gms.tasks.Task
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 
@@ -60,6 +61,17 @@ class FirebaseDatabase {
 
         UserConfig.getInstance().currentUserLocation = userLocation
         return locationRef.set(userLocation)
+    }
+
+    fun updateUser(user: User): Task<Void> {
+        val usersRef = cloudDatabase.collection(userTableName)
+            .document(user.user_id!!)
+        return usersRef.set(user)
+    }
+
+    fun retrieveLocations(): Task<QuerySnapshot> {
+        val locationRef = cloudDatabase.collection(locationTableNam)
+        return locationRef.get()
     }
 
 }

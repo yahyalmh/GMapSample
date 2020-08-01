@@ -70,6 +70,24 @@ class User : Parcelable {
         dest.writeString(avatar)
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as User
+
+        if (user_id != other.user_id) return false
+        if (username != other.username) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = user_id?.hashCode() ?: 0
+        result = 31 * result + (username?.hashCode() ?: 0)
+        return result
+    }
+
     companion object {
         val CREATOR: Creator<User?> = object : Creator<User?> {
             override fun createFromParcel(`in`: Parcel): User? {
@@ -82,5 +100,6 @@ class User : Parcelable {
         }
 
     }
+
 
 }

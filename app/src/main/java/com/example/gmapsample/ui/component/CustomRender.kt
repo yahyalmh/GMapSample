@@ -122,4 +122,11 @@ open class CustomRender : DefaultClusterRenderer<IClusterItem> {
         // Always render clusters.
         return cluster.size > 1
     }
+
+    fun updateMarker(clusterItem: IClusterItem) {
+        val marker = getMarker(clusterItem)
+        if (marker!= null){
+            marker.position = clusterItem.position
+        }
+    }
 }

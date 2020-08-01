@@ -185,7 +185,6 @@ class LoginActivity : AppCompatActivity() {
                 profilePictureId = data!!.getIntExtra("picture_id", R.mipmap.ic_login)
                 userImage.setImageDrawable(getDrawable(profilePictureId))
             }
-
         }
     }
 

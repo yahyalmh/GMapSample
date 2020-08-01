@@ -108,6 +108,13 @@ class LaunchActivity : FragmentActivity() {
         }
     }
 
+    private fun stopLocationService() {
+        if (isLocationServiceRunning()) {
+            val intent = Intent(this@LaunchActivity, LocationService::class.java)
+            this@LaunchActivity.stopService(intent)
+        }
+    }
+
     private fun isLocationServiceRunning(): Boolean {
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         for (serviceInfo in activityManager.getRunningServices(Int.MAX_VALUE)) {
@@ -249,5 +256,10 @@ class LaunchActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopLocationService()
     }
 }

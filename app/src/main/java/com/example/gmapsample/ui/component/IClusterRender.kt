@@ -17,7 +17,7 @@ import com.google.maps.android.clustering.view.DefaultClusterRenderer
 import com.google.maps.android.ui.IconGenerator
 
 
-class IClusterRender :  DefaultClusterRenderer<IClusterItem> {
+class IClusterRender : DefaultClusterRenderer<IClusterItem> {
     private var iconGenerator: IconGenerator
     private var imageView: ImageView
     private var markerWidth: Int = 0
@@ -30,7 +30,7 @@ class IClusterRender :  DefaultClusterRenderer<IClusterItem> {
     ) : super(context, map, clusterManager) {
         iconGenerator = IconGenerator(context)
         imageView = ImageView(context)
-        imageView.layoutParams = ViewGroup.LayoutParams(Utils.dp(25f), Utils.dp(25f))
+        imageView.layoutParams = ViewGroup.LayoutParams(Utils.dp(35f), Utils.dp(35f))
         val padding = Utils.dp(2f)
         imageView.setPadding(padding)
         iconGenerator.setContentView(imageView)
@@ -47,8 +47,11 @@ class IClusterRender :  DefaultClusterRenderer<IClusterItem> {
         return false
     }
 
-    fun setUpdateMarker(clusterItem: IClusterItem) {
+    fun updateMarker(clusterItem: IClusterItem) {
         val marker: Marker = getMarker(clusterItem)
         marker.position = clusterItem.position
+        imageView.setImageResource(clusterItem.iconPicture)
+        val makeIcon = iconGenerator.makeIcon()
+        marker.setIcon(BitmapDescriptorFactory.fromBitmap(makeIcon))
     }
 }

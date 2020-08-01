@@ -23,10 +23,12 @@ import com.google.android.gms.location.*
 import com.google.firebase.firestore.*
 
 class LocationService : Service() {
+    private lateinit var cloudFirebase: FirebaseFirestore
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+
     private val UPDATE_INTERVAL: Long = 4 * 1000/*4 second*/
     private val FASTEST_INTERVAL: Long = 2 * 1000 /*2 second*/
-    private lateinit var cloudFirebase: FirebaseFirestore
 
     override fun onCreate() {
         super.onCreate()
@@ -75,43 +77,31 @@ class LocationService : Service() {
             return
         }
 
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                val lastLocation = locationResult!!.lastLocation
+
+                val userLocation = UserLocation()
+                userLocation.geoPoint = GeoPoint(lastLocation.latitude, lastLocation.longitude)
+                userLocation.user = UserConfig.getInstance().currentUser
+                userLocation.timestamp = null
+
+                FirebaseDatabase.getInstance().saveUserLocations(userLocation)
+            }
+
+        }
         fusedLocationProviderClient.requestLocationUpdates(
             locationRequest,
-            object : LocationCallback() {
-                override fun onLocationResult(locationResult: LocationResult?) {
-                    val lastLocation = locationResult!!.lastLocation
-
-                    val userLocation = UserLocation()
-                    userLocation.geoPoint = GeoPoint(lastLocation.latitude, lastLocation.longitude)
-                    userLocation.user = UserConfig.getInstance().currentUser
-                    userLocation.timestamp = null
-
-                    FirebaseDatabase.getInstance().saveUserLocations(userLocation)
-//                    saveUserLocation(userLocation)
-                }
-
-            }, Looper.myLooper()
+            locationCallback, Looper.myLooper()
         )
 
     }
 
-    private fun saveUserLocation(userLocation: UserLocation?) {
-        if (userLocation == null) return
-        val locationRef = cloudFirebase.collection(getString(R.string.collection_user_locations))
-            .whereEqualTo("user.username", UserConfig.getInstance().currentUser.username.toString())
-            .get().addOnSuccessListener { documents ->
-                for (child in documents) {
-                    val user = child.toObject(UserLocation::class.java)
-                }
-            }
-
-        val locationRef2 = cloudFirebase.collection(getString(R.string.collection_user_locations)).add(userLocation)
-            /*.document(UserConfig.getInstance().currentUser.user_id.toString()).se*/
-            .addOnCompleteListener{
-
-            }
-        println("sdfasdfsadfas")
-//        locationRef.update()
+    override fun onDestroy() {
+        super.onDestroy()
+        if (fusedLocationProviderClient != null) {
+            fusedLocationProviderClient.removeLocationUpdates(locationCallback);
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
