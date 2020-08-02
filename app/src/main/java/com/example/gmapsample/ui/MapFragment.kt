@@ -6,9 +6,9 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.location.Location
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,11 +34,13 @@ import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
-import com.google.maps.android.clustering.Cluster
+import com.google.maps.DirectionsApiRequest
+import com.google.maps.GeoApiContext
+import com.google.maps.PendingResult
 import com.google.maps.android.clustering.ClusterManager
+import com.google.maps.model.DirectionsResult
 
-class MapFragment : Fragment(), OnMapReadyCallback,
-    ClusterManager.OnClusterClickListener<IClusterItem>, GoogleMap.OnInfoWindowClickListener {
+class MapFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnInfoWindowClickListener {
     private val requestCode = 2536
     private var mUserLocation: UserLocation? = null
     private val LIVE_LOCATION_INTERVAL = 3000L
@@ -60,6 +62,7 @@ class MapFragment : Fragment(), OnMapReadyCallback,
 
     private val usersLocationList: ArrayList<UserLocation> = ArrayList()
     private val mClusterMarkers = ArrayList<IClusterItem>()
+    private lateinit var mGeoApiContext: GeoApiContext
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -124,6 +127,9 @@ class MapFragment : Fragment(), OnMapReadyCallback,
         }
         mapView.onCreate(mapViewBundle)
         mapView.getMapAsync(this@MapFragment)
+        mGeoApiContext =
+            GeoApiContext.Builder().apiKey(activity!!.getString(R.string.google_map_api_key))
+                .build()
     }
 
     override fun onMapReady(map: GoogleMap) {
@@ -160,6 +166,9 @@ class MapFragment : Fragment(), OnMapReadyCallback,
             if (usersLocationList.isNotEmpty()) {
                 for (location in usersLocationList) {
                     if (location.user == UserConfig.getInstance().currentUser) {
+                        if (UserConfig.getInstance().currentUserLocation == null) {
+                            UserConfig.getInstance().currentUserLocation = location
+                        }
                         animateCamera(
                             LatLng(
                                 location.geoPoint.latitude,
@@ -196,6 +205,8 @@ class MapFragment : Fragment(), OnMapReadyCallback,
         val right = location.longitude + radius
         mMapBounds = LatLngBounds(LatLng(bottom, left), LatLng(top, right))
         mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngBounds(mMapBounds, 10))
+        mGoogleMap!!.setOnInfoWindowClickListener(this)// add this listener after clustering.
+
     }
 
     private fun addUserMarkers() {
@@ -208,22 +219,22 @@ class MapFragment : Fragment(), OnMapReadyCallback,
                 mClusterManager!!.renderer = mClusterManagerRender
             }
             mGoogleMap!!.setOnInfoWindowClickListener(this)
-        }
-        getUsersLocations()
-        for (userLocation in usersLocationList) {
-            val clusterItem = IClusterItem(
-                LatLng(
-                    userLocation.geoPoint.latitude,
-                    userLocation.geoPoint.longitude
-                ), userLocation.user
-            )
-            mClusterManager!!.addItem(clusterItem)
-            mClusterMarkers.add(clusterItem)
-            if (userLocation.user.user_id == UserConfig.getInstance().currentUser.user_id) {
-                mClusterItem = clusterItem
+            getUsersLocations()
+            for (userLocation in usersLocationList) {
+                val clusterItem = IClusterItem(
+                    LatLng(
+                        userLocation.geoPoint.latitude,
+                        userLocation.geoPoint.longitude
+                    ), userLocation.user
+                )
+                mClusterManager!!.addItem(clusterItem)
+                mClusterMarkers.add(clusterItem)
+                if (userLocation.user.user_id == UserConfig.getInstance().currentUser.user_id) {
+                    mClusterItem = clusterItem
+                }
             }
+            mClusterManager!!.cluster()
         }
-        mClusterManager!!.cluster()
     }
 
     private fun startLiveLocationRunnable() {
@@ -340,30 +351,37 @@ class MapFragment : Fragment(), OnMapReadyCallback,
                 .setMessage(marker.snippet)
                 .setPositiveButton("OK") { dialog, which ->
                     dialog.dismiss()
+                    calculateDirections(marker)
                 }.setNegativeButton("Cancel") { dialog, which ->
                     dialog.dismiss()
                 }
+            val dialog = builder.create()
+            dialog.show()
+            dialog.window!!.setBackgroundDrawable(RoundedDrawable(25f))
         }
     }
 
-    override fun onClusterClick(cluster: Cluster<IClusterItem>): Boolean {
-        val firstName: String = cluster.items.iterator().next().user.username!!
+    private fun calculateDirections(marker: Marker) {
+        val destination =
+            com.google.maps.model.LatLng(marker.position.latitude, marker.position.longitude)
+        val directionRequest = DirectionsApiRequest(mGeoApiContext)
+        directionRequest.alternatives(true)
+        directionRequest.origin(
+            com.google.maps.model.LatLng(
+                UserConfig.getInstance().currentUserLocation!!.geoPoint.latitude,
+                UserConfig.getInstance().currentUserLocation!!.geoPoint.longitude
+            )
+        )
+        directionRequest.destination(destination)
+            .setCallback(object : PendingResult.Callback<DirectionsResult> {
+                override fun onResult(result: DirectionsResult?) {
+                    Log.d("TAG", "calculateDirections: routes: " + result!!.routes[0].toString())
+                }
 
-        // Create the builder to collect all essential cluster items for the bounds.
-        val builder = LatLngBounds.builder()
-        for (item in cluster.items) {
-            builder.include(item.position)
-        }
-        // Get the LatLngBounds
-        val bounds = builder.build()
-
-        // Animate camera to the bounds
-        try {
-            mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return true
+                override fun onFailure(e: Throwable?) {
+                    e!!.printStackTrace()
+                }
+            })
     }
 
 }
