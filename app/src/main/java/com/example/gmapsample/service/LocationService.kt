@@ -85,8 +85,8 @@ class LocationService : Service() {
                 userLocation.geoPoint = GeoPoint(lastLocation.latitude, lastLocation.longitude)
                 userLocation.user = UserConfig.getInstance().currentUser
                 userLocation.timestamp = null
-
                 FirebaseDatabase.getInstance().saveUserLocations(userLocation)
+                UserConfig.getInstance().currentUserLocation = userLocation
             }
 
         }

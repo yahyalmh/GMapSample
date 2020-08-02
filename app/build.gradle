@@ -46,7 +46,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     // add SDKs for any other desired Firebase products
-    implementation 'com.google.firebase:firebase-analytics:17.4.3'
+    implementation 'com.google.firebase:firebase-analytics:17.4.4'
 
     // google location service
     implementation 'com.google.android.gms:play-services-location:17.0.0'
@@ -57,13 +57,17 @@ dependencies {
     // google map utils for clustering
     implementation 'com.google.maps.android:maps-utils-ktx:1.7.0'
 
+    // google direction api(for java). from github.
+    implementation 'com.google.maps:google-maps-services:0.14.0'
+    implementation 'org.slf4j:slf4j-simple:1.7.25'
+
 
     //RecyclerView
     implementation "androidx.recyclerview:recyclerview:1.1.0"
 
     //firebase firestore
     //implementation 'com.google.firebase:firebase-firestore:21.4.3'
-    implementation 'com.google.firebase:firebase-firestore-ktx:21.4.3'
+    implementation 'com.google.firebase:firebase-firestore-ktx:21.5.0'
 
     // firebase real tiem database
     implementation 'com.google.firebase:firebase-database-ktx:19.3.1'

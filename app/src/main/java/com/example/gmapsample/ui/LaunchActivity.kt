@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentSender.SendIntentException
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -20,17 +19,13 @@ import com.example.gmapsample.Constants.ERROR_DIALOG_REQUEST
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION
 import com.example.gmapsample.Constants.PERMISSIONS_REQUEST_ENABLE_GPS
 import com.example.gmapsample.R
-import com.example.gmapsample.UserConfig
-import com.example.gmapsample.Utils
-import com.example.gmapsample.db.FirebaseDatabase
-import com.example.gmapsample.model.UserLocation
+import com.example.gmapsample.util.Utils
 import com.example.gmapsample.service.LocationService
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.common.api.PendingResult
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
-import com.google.firebase.firestore.GeoPoint
 
 
 class LaunchActivity : FragmentActivity() {
@@ -38,12 +33,17 @@ class LaunchActivity : FragmentActivity() {
 
     private var mLocationPermissionGranted = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private var mUserLocation: UserLocation? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         setContentView(R.layout.activity_main)
+        mLocationPermissionGranted = ActivityCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        startMapFragment()
+
     }
 
 
@@ -51,51 +51,6 @@ class LaunchActivity : FragmentActivity() {
 
     }
 
-    private fun getUserDetails() {
-        if (mUserLocation == null) {
-            mUserLocation = UserLocation()
-            mUserLocation!!.user = UserConfig.getInstance().currentUser
-
-            getLastKnownLocation()
-        }
-    }
-
-    private fun getLastKnownLocation() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestLocationPermission()
-            return
-        }
-
-        fusedLocationClient.lastLocation.addOnCompleteListener { task ->
-            if (task.isSuccessful && task.result != null) {
-                val location: Location = task.result!!
-                val geoPoint = GeoPoint(location.latitude, location.longitude)
-
-                mUserLocation!!.geoPoint = geoPoint
-                mUserLocation!!.timestamp = null
-                FirebaseDatabase.getInstance().saveUserLocations(mUserLocation!!)
-                    .addOnCompleteListener {
-                        if (it.isComplete || it.isSuccessful) {
-                            startMapFragment()
-                            startLocationService()
-                            UserConfig.getInstance().currentUserLocation = mUserLocation
-                        } else {
-                            getLastKnownLocation()
-                        }
-                    }
-
-            } else {
-                getLastKnownLocation()
-            }
-        }
-    }
 
     private fun startLocationService() {
         if (!isLocationServiceRunning()) {
@@ -137,12 +92,31 @@ class LaunchActivity : FragmentActivity() {
         super.onResume()
         if (checkGps()) {
             if (mLocationPermissionGranted) {
+                startLocationService()
                 getChatRooms()
-                getUserDetails()
             } else {
                 requestLocationPermission()
             }
         }
+    }
+
+    private fun checkGps(): Boolean {
+        if (Utils.isPlayServiceAvailable()) {
+            if (Utils.isGPSEnabled()) {
+                return true
+            } else {
+                requestGps()
+            }
+        } else {
+            val dialog = GoogleApiAvailability.getInstance().getErrorDialog(
+                this@LaunchActivity,
+                GoogleApiAvailability.getInstance()
+                    .isGooglePlayServicesAvailable(applicationContext),
+                ERROR_DIALOG_REQUEST
+            )
+            dialog.show()
+        }
+        return false
     }
 
     private fun requestGps() {
@@ -189,25 +163,6 @@ class LaunchActivity : FragmentActivity() {
         }
     }
 
-    private fun checkGps(): Boolean {
-        if (Utils.isPlayServiceAvailable()) {
-            if (Utils.isGPSEnabled()) {
-                return true
-            } else {
-                requestGps()
-            }
-        } else {
-            val dialog = GoogleApiAvailability.getInstance().getErrorDialog(
-                this@LaunchActivity,
-                GoogleApiAvailability.getInstance()
-                    .isGooglePlayServicesAvailable(applicationContext),
-                ERROR_DIALOG_REQUEST
-            )
-            dialog.show()
-        }
-        return false
-    }
-
     private fun requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(
                 this.applicationContext,
@@ -217,7 +172,6 @@ class LaunchActivity : FragmentActivity() {
         ) {
             mLocationPermissionGranted = true
             getChatRooms()
-            getUserDetails()
         } else {
             ActivityCompat.requestPermissions(
                 this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -250,7 +204,6 @@ class LaunchActivity : FragmentActivity() {
             PERMISSIONS_REQUEST_ENABLE_GPS -> {
                 if (mLocationPermissionGranted) {
                     getChatRooms()
-                    getUserDetails()
                 } else {
                     requestLocationPermission()
                 }

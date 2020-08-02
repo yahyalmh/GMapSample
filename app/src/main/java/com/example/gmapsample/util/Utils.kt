@@ -1,12 +1,8 @@
-package com.example.gmapsample
+package com.example.gmapsample.util
 
 import android.content.Context
-import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
 import android.location.LocationManager
 import android.widget.Toast
-import com.example.gmapsample.ui.LaunchActivity
 import com.example.gmapsample.ui.LoginActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability

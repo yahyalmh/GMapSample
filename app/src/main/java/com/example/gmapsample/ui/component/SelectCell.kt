@@ -2,15 +2,12 @@ package com.example.gmapsample.ui.component
 
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.setMargins
-import androidx.core.view.setPadding
-import com.example.gmapsample.Utils
+import com.example.gmapsample.util.Utils
 
 class SelectCell : LinearLayout {
     var imageView: ImageView

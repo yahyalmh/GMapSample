@@ -6,9 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.core.view.setPadding
 import com.example.gmapsample.R
-import com.example.gmapsample.Utils
+import com.example.gmapsample.util.Utils
 import com.example.gmapsample.model.IClusterItem
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor

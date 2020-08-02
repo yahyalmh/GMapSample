@@ -2,11 +2,11 @@ package com.example.gmapsample.ui
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.graphics.ColorFilter
-import android.media.Image
+import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -24,6 +24,7 @@ import com.example.gmapsample.model.IClusterItem
 import com.example.gmapsample.model.UserLocation
 import com.example.gmapsample.ui.component.IClusterRender
 import com.example.gmapsample.ui.component.RoundedDrawable
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -32,9 +33,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
 import com.google.maps.android.clustering.Cluster
 import com.google.maps.android.clustering.ClusterManager
-import kotlinx.android.synthetic.main.fragment_map.*
 
 class MapFragment : Fragment(), OnMapReadyCallback,
     ClusterManager.OnClusterClickListener<IClusterItem>, GoogleMap.OnInfoWindowClickListener {
@@ -79,16 +80,29 @@ class MapFragment : Fragment(), OnMapReadyCallback,
         logoutImage = view.findViewById(R.id.logout)
         logoutImage.setBackgroundDrawable(RoundedDrawable(25f))
         logoutImage.setColorFilter(Color.rgb(194, 78, 29))
-        logoutImage.setOnClickListener{
-            startActivity(Intent(activity!!, LoginActivity::class.java))
-            activity!!.supportFragmentManager.popBackStack();
-            activity!!.finish()
-            UserConfig.getInstance().clear()
+        logoutImage.setOnClickListener {
+            val builder = AlertDialog.Builder(activity!!)
+                .setMessage("Are you sure to logout?")
+                .setPositiveButton(
+                    "OK"
+                ) { dialog, which ->
+                    startActivity(Intent(activity!!, LoginActivity::class.java))
+                    activity!!.supportFragmentManager.popBackStack();
+                    activity!!.finish()
+                    UserConfig.getInstance().clear()
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel") { dialog, which ->
+                    dialog.dismiss()
+                }
+
+            val dialog = builder.create()
+            dialog.show()
+            dialog.window!!.setBackgroundDrawable(RoundedDrawable(25f))
         }
         cloudFirebaseDb = FirebaseFirestore.getInstance()
         getUsersLocations()
         initGoogleMap(savedInstanceState)
-        mUserLocation = UserConfig.getInstance().currentUserLocation!!
         return view
     }
 
@@ -117,16 +131,15 @@ class MapFragment : Fragment(), OnMapReadyCallback,
                 activity!!.applicationContext,
                 Manifest.permission.ACCESS_FINE_LOCATION
             )
-            != PackageManager.PERMISSION_GRANTED
+            == PackageManager.PERMISSION_GRANTED
             && ActivityCompat.checkSelfPermission(
                 activity!!.applicationContext,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
-            != PackageManager.PERMISSION_GRANTED
+            == PackageManager.PERMISSION_GRANTED
         ) {
-            return
+            map.isMyLocationEnabled = true
         }
-        map.isMyLocationEnabled = true
         mGoogleMap = map
         map.setOnMapLoadedCallback {
             setCameraView()
@@ -135,15 +148,54 @@ class MapFragment : Fragment(), OnMapReadyCallback,
     }
 
     private fun setCameraView() {
-        val radius = 0.03f
-        if (mUserLocation != null) {
-            val bottom = mUserLocation!!.geoPoint.latitude - radius
-            val left = mUserLocation!!.geoPoint.longitude - radius
-            val top = mUserLocation!!.geoPoint.latitude + radius
-            val right = mUserLocation!!.geoPoint.longitude + radius
-            mMapBounds = LatLngBounds(LatLng(bottom, left), LatLng(top, right))
-            mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngBounds(mMapBounds, 10))
+        if (ActivityCompat.checkSelfPermission(
+                activity!!,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                activity!!,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            var animated = false
+            if (usersLocationList.isNotEmpty()) {
+                for (location in usersLocationList) {
+                    if (location.user == UserConfig.getInstance().currentUser) {
+                        animateCamera(
+                            LatLng(
+                                location.geoPoint.latitude,
+                                location.geoPoint.longitude
+                            ), 3f
+                        )
+                        animated = true
+                    }
+                }
+            }
+            if (!animated) {
+                animateCamera(LatLng(35.0, 54.0), 5f)
+            }
+        } else {
+            LocationServices.getFusedLocationProviderClient(activity!!)
+                .lastLocation.addOnSuccessListener { location ->
+                    if (location != null) {
+                        val geoPoint = GeoPoint(location.latitude, location.longitude)
+                        mUserLocation = UserLocation()
+                        mUserLocation!!.geoPoint = geoPoint
+                        mUserLocation!!.user = UserConfig.getInstance().currentUser
+                        UserConfig.getInstance().currentUserLocation = mUserLocation
+
+                        animateCamera(LatLng(location.latitude, location.longitude), 3f)
+                    }
+                }
         }
+    }
+
+    private fun animateCamera(location: LatLng, radius: Float) {
+        val bottom = location.latitude - radius
+        val left = location.longitude - radius
+        val top = location.latitude + radius
+        val right = location.longitude + radius
+        mMapBounds = LatLngBounds(LatLng(bottom, left), LatLng(top, right))
+        mGoogleMap!!.animateCamera(CameraUpdateFactory.newLatLngBounds(mMapBounds, 10))
     }
 
     private fun addUserMarkers() {
@@ -157,6 +209,7 @@ class MapFragment : Fragment(), OnMapReadyCallback,
             }
             mGoogleMap!!.setOnInfoWindowClickListener(this)
         }
+        getUsersLocations()
         for (userLocation in usersLocationList) {
             val clusterItem = IClusterItem(
                 LatLng(
@@ -185,6 +238,10 @@ class MapFragment : Fragment(), OnMapReadyCallback,
     }
 
     private fun retrieveLiveLocations() {
+        if (mClusterMarkers.size == 0) {
+            addUserMarkers()
+        }
+
         try {
             FirebaseDatabase.getInstance().retrieveLocations().addOnSuccessListener { collection ->
                 for (child in collection) {
@@ -275,15 +332,22 @@ class MapFragment : Fragment(), OnMapReadyCallback,
         mapView.onLowMemory()
     }
 
-    override fun onInfoWindowClick(p0: Marker?) {
-
+    override fun onInfoWindowClick(marker: Marker?) {
+        if (marker!!.snippet == "This is you") {
+            marker.hideInfoWindow()
+        } else {
+            val builder = AlertDialog.Builder(activity!!)
+                .setMessage(marker.snippet)
+                .setPositiveButton("OK") { dialog, which ->
+                    dialog.dismiss()
+                }.setNegativeButton("Cancel") { dialog, which ->
+                    dialog.dismiss()
+                }
+        }
     }
 
     override fun onClusterClick(cluster: Cluster<IClusterItem>): Boolean {
         val firstName: String = cluster.items.iterator().next().user.username!!
-
-        // Zoom in the cluster. Need to create LatLngBounds and including all the cluster items
-        // inside of bounds, then animate to center of the bounds.
 
         // Create the builder to collect all essential cluster items for the bounds.
         val builder = LatLngBounds.builder()
